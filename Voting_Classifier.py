@@ -1,8 +1,12 @@
-"""Code originally written by Davidson et al. at https://github.com/t-davidson/hate-speech-and-offensive-language
+"""
+Code originally written by Davidson et al. at https://github.com/t-davidson/hate-speech-and-offensive-language
+    Taken from Davidson:
+        - Preprocessing and tokenizing methods
+        - TFIDF Vectorizer, POS Vectorizer, Other features array (Syllables, Character/word count, sentiment analysis)
     Modified by: Daniel Firebanks
-        - Added lexicon score based on ngram frequency
-        - Added random and glove word embeddings
-        - Added hard voting classifier (SGD Classifier, LinearSVM, Percepron)
+        - Added lexicon score based on ngram frequency as a feature
+        - Added random and glove word embeddings as features
+        - Added hard voting classifier (SGD Classifier, LinearSVM, Perceptron) instead of Logistic Regression Classifier
 """
 
 import string
@@ -341,7 +345,7 @@ def run_classifier(clf, name, X_train, y_train, X_test, y_test):
     test_time = time() - t0
     print("test time:  %0.3fs" % test_time)
 
-    joblib.dump(clf, "final_model.pkl")
+    joblib.dump(clf, "final_model_full_glove.pkl")
     print("Model saved!")
 
     # Metrics ==========================================================================================================
@@ -373,7 +377,7 @@ def run_classifier(clf, name, X_train, y_train, X_test, y_test):
 
     #print(confusion_matrix_var)
     print(matrix_proportions)
-    plt.savefig(name + "_Classifier_Glove.pdf")
+    plt.savefig(name + "_Full_Glove.pdf")
     print()
 
     # Save and return classifier description
@@ -409,9 +413,7 @@ if __name__ == '__main__':
 
     # Construct tfidf matrix and get relevant scores
     tfidf = vectorizer.fit_transform(tweets).toarray()
-    vocab = {v: i for i, v in enumerate(vectorizer.get_feature_names())}
     idf_vals = vectorizer.idf_
-    idf_dict = {i: idf_vals[i] for i in vocab.values()}  # keys are indices; values are IDF scores
 
     print("Got TFIDF!")
 
@@ -444,7 +446,6 @@ if __name__ == '__main__':
 
     # Construct POS TF matrix and get vocab dict
     pos = pos_vectorizer.fit_transform(pd.Series(tweet_tags)).toarray()
-    pos_vocab = {v: i for i, v in enumerate(pos_vectorizer.get_feature_names())}
     print("Got POS Tags!")
 
     #np.save("POS_Tags.npy", pos)
@@ -458,7 +459,7 @@ if __name__ == '__main__':
     # Uncomment if want to create random word embeddings
     # make_word_embeddings(clean_tweets)
     # random_model_file = "random_model_combined_tweets.txt"
-    # word2vec_model = gensim.models.Word2Vec.load(glove_model_file)
+    # word2vec_model = gensim.models.Word2Vec.load(random_model_file)
 
     # Load model file
     glove_model_file = "glove.twitter.27B.200d.txt"
@@ -480,11 +481,6 @@ if __name__ == '__main__':
 
     # Get other features ===============================================================================================
 
-    other_features_names = ["FKRA", "FRE", "num_syllables", "avg_syl_per_word", "num_chars", "num_chars_total",
-                            "num_terms", "num_words", "num_unique_words", "vader neg", "vader pos", "vader neu",
-                            "vader compound", "num_hashtags", "num_mentions", "num_urls",
-                            "is_retweet", "ngrams_relevance"]
-
     feats = get_feature_array(tweets)
     print("Got other features!")
 
@@ -495,17 +491,6 @@ if __name__ == '__main__':
     # Now join them all up ======================================================a======================================
 
     M = np.column_stack((tfidf, pos, feats, embeddings))
-
-    # Finally get a list of variable names
-    variables = [''] * len(vocab)
-    for k, v in vocab.items():
-        variables[v] = k
-
-    pos_variables = [''] * len(pos_vocab)
-    for k, v in pos_vocab.items():
-        pos_variables[v] = k
-
-    feature_names = variables + pos_variables + other_features_names
 
     # Running the model ================================================================================================
 

@@ -1,9 +1,13 @@
 """
 Code originally written by Davidson et al. at https://github.com/t-davidson/hate-speech-and-offensive-language
+    Taken from Davidson:
+        - Preprocessing and tokenizing methods
+        - TFIDF Vectorizer, POS Vectorizer, Other features array (Syllables, Character/word count, sentiment analysis)
     Modified by: Daniel Firebanks
-        - Added lexicon score based on ngram frequency
-        - Added random and glove word embeddings
-        - Added hard voting classifier (SGD Classifier, LinearSVM, Percepron)
+        - Added lexicon score based on ngram frequency as a feature
+        - Added random and glove word embeddings as features
+        - Added hard voting classifier (SGD Classifier, LinearSVM, Perceptron) instead of Logistic Regression Classifier
+
 ========================================================================================================================
 This file contains code to
 
@@ -24,8 +28,17 @@ import pandas as pd
 from sklearn.externals import joblib
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import VotingClassifier
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import Perceptron
 from sklearn.feature_selection import SelectFromModel
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import confusion_matrix
 import nltk
 from nltk.stem.porter import *
 import csv
@@ -288,6 +301,7 @@ def get_embeddings(clean_tweets, model, num_features, index2word_set):
 class VotingModel:
 
     def __init__(self):
+
         # Load model
         self.model = joblib.load('final_model.pkl')
         self.tf_vectorizer= joblib.load('final_tfidf.pkl')
@@ -296,17 +310,23 @@ class VotingModel:
 
         # Load embeddings
         glove_model_file = "glove.twitter.27B.200d.txt"
+
+        # Uncomment this if using random embeddings
         # random_model_file = "random_model_combined_tweets.txt"
         # word2vec_model = gensim.models.Word2Vec.load(glove_model_file)
 
-        word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(glove_model_file)
+        word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(glove_model_file) #Comment this out if using random embeddings
         self.emb = word2vec_model.wv
+
+        # Variable to store confusion matrix
+        self.confusion_matrix = None
 
         #TODO Add conditional for random embedings in the future (model and emb_dimension)
 
         # Variables for data
         self.X = None
         self.y = None
+        self.data = None
 
 
     def read_input(self, dataset):
@@ -344,14 +364,76 @@ class VotingModel:
         return X
 
     def train(self, dataset):
-        pass
+
+        self.data = dataset
+        self.X = self.read_input(dataset)
+        self.y = [t.getLabel() for t in dataset]
+
+        X_train, X_test, y_train, y_test = train_test_split(self.X, self.y, random_state=42, test_size=0.1)
+
+        clf1 = SGDClassifier(class_weight='balanced', penalty='l2', alpha=0.0001, max_iter=50, loss='log')
+        clf1_pipe = Pipeline([('select', SelectFromModel(
+            SGDClassifier(class_weight='balanced', penalty='l1', alpha=0.0001, max_iter=50))),
+                              ('model', clf1)])
+
+        clf2 = LinearSVC(class_weight='balanced', C=0.01, penalty='l2', loss='squared_hinge', multi_class='ovr')
+        clf2_pipe = Pipeline(
+            [('select', SelectFromModel(LogisticRegression(class_weight='balanced', penalty="l1", C=0.01))),
+             ('model', clf2)])
+
+        clf3 = Perceptron(class_weight='balanced', max_iter=50, penalty='l2', tol=1e-3)
+        clf3_pipe = Pipeline(
+            [('select', SelectFromModel(Perceptron(class_weight='balanced', max_iter=50, penalty='l1', tol=1e-3))),
+             ('model', clf3)])
+
+        eclf = VotingClassifier(estimators=[("sgd_log", clf1_pipe), ("svm", clf2_pipe), ("p", clf3_pipe)],
+                                voting='hard')
+
+        # Train, test and save model
+        eclf.fit(X_train, y_train)
+
+        # scores = cross_val_score(eclf, X_train, y_train,
+        #                          cv=StratifiedKFold(n_splits=5, random_state=42).split(X_train, y_train),
+        #                          scoring='accuracy', n_jobs=-1, verbose=1)
+        #
+        # print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), "Voting Classifier"))
+
+        pred = eclf.predict(X_test)
+
+        print("classification report:")
+        print(classification_report(y_test, pred))
+
+        #Save and store model
+        self.model = eclf
+        joblib.dump(eclf, "newly_trained_model.pkl")
+        print("Model saved!")
+
 
     def predict(self, dataset):
+
+        self.data = dataset
         self.X = self.read_input(dataset)
         self.y = self.model.predict(self.X)
 
         return self.y
 
+    def getConfusionMatrix(self):
+
+        y_labels = [t.getLabel() for t in self.data]
+
+        self.confusion_matrix = confusion_matrix(self.y, y_labels)
+
+        conf_dict = {}
+
+        for i in range(len(self.confusion_matrix)):
+            #total_row = sum(conf[i])
+            for j in range(len(self.confusion_matrix[i])):
+                key = (i, j)
+                value = self.confusion_matrix[i][j]
+                conf_dict[key] = value
+                #print("Pairs are", key, value)
+
+        return conf_dict
 
 if __name__ == '__main__':
 
