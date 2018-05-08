@@ -1,17 +1,13 @@
 # Ensemble Learning for Tweet Classification of Hate Speech and Offensive Language - Winter/Spring Project 2018
 
-Link to full project: https://github.com/quinnbp/WT2018 
-
-This program is part of a project that will use a councilor model to detect offensive language and hate speech in tweets. It includes:
+These programs are part of a project that will use ensemble learning model to detect offensive language and hate speech in tweets. It is composed of:
 
   - A Voting classifier
   - An LSTM network
   - A Bayesian model
   - A Proximity model
  
- All of the outputs will then be averaged and each classifier's output will be assigned a weight depending on the class in which it has gotten the most accuracy. Finally, the weighted average will be calculated as the model's output. 
- 
-Written by Daniel Firebanks, Sage Vouse and Quinn Barker-Plummer
+Link to full project: https://github.com/quinnbp/WT2018 
 
 ------------------------------------------------------------------------------------------------------------------------------
 This repository contains: 
@@ -46,7 +42,7 @@ TODO:
   - Creates a confusion matrix given the output predictions of a classifer and the set of true labels
   - Contains operations like getting precision score, storing it as a pdf, getting number of false positives, getting the CEN score of the matrix, etc.
 
-(All of these written by Daniel Firebanks)
+Written by Daniel Firebanks
 
 Inspired by the research of: 
   - [1]Davidson et al. (https://github.com/t-davidson/hate-speech-and-offensive-language) 
