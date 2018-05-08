@@ -14,7 +14,7 @@ This repository contains:
 
 ## Voting classifier for hate-speech and offensive language detection in tweets:
 
-  - Uses a Voting classifier that evaluates the outputs of:
+  - Uses a hard-voting (majority voting) classifier that evaluates the outputs of:
     - An SGD Classifier with log loss
     - A LinearSVM Classifier with L1 feature selection and L2 classification
     - A Perceptron
@@ -27,7 +27,7 @@ This repository contains:
     - Word embeddings (random and GloVe)
 
 TODO:
-  - Try improving word embeddings using a neural network based on [2]
+  - []Try improving word embeddings using a neural network based on [2]
   
 ## Weighting system for ensemble learning
 
