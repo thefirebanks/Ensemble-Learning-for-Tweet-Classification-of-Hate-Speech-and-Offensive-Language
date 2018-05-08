@@ -1,6 +1,6 @@
 # Ensemble Learning for Tweet Classification of Hate Speech and Offensive Language - Winter/Spring Project 2018
 
-These programs are part of a project that will use ensemble learning model to detect offensive language and hate speech in tweets. It is composed of:
+These programs are part of a project that will use an ensemble learning model to detect offensive language and hate speech in tweets. It is composed of:
 
   - A Voting classifier
   - An LSTM network
