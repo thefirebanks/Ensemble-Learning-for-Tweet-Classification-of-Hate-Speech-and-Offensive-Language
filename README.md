@@ -27,7 +27,7 @@ This repository contains:
     - Word embeddings (random and GloVe)
 
 TODO:
-  - []Try improving word embeddings using a neural network based on [2]
+  - [ ]Try improving word embeddings using a neural network based on [2]
   
 ## Weighting system for ensemble learning
 
