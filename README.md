@@ -32,17 +32,18 @@ TODO:
 ## Weighting system for ensemble learning
 
   - Has 3 different options for applying weighted voting:
-  - Precision score of the classifiers' confusion matrices
-  - CEN score 
-  - Precision + CEN score
-  - Equal voting
+    - Precision score of the classifiers' confusion matrices
+    - CEN score 
+    - Precision + CEN score
+    - Equal voting
 
 ## Confusion matrix class
 
   - Creates a confusion matrix given the output predictions of a classifer and the set of true labels
   - Contains operations like getting precision score, storing it as a pdf, getting number of false positives, getting the CEN score of the matrix, etc.
 
-Written by Daniel Firebanks
+----------------------------------------
+*All written by Daniel Firebanks*
 
 Inspired by the research of: 
   - [1]Davidson et al. (https://github.com/t-davidson/hate-speech-and-offensive-language) 
